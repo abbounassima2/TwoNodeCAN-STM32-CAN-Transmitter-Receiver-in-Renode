@@ -1,6 +1,0 @@
-../Core/Src/bmp180.c:7:17:BMP180_ReadReg	6
-../Core/Src/bmp180.c:45:17:BMP180_WriteReg	5
-../Core/Src/bmp180.c:83:17:BMP180_Read16	4
-../Core/Src/bmp180.c:123:17:BMP180_Init	16
-../Core/Src/bmp180.c:259:17:BMP180_ReadTemperature	5
-../Core/Src/bmp180.c:360:17:BMP180_ReadPressure	14

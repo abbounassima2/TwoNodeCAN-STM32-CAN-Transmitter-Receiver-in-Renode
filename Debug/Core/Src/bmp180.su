@@ -1,6 +1,0 @@
-../Core/Src/bmp180.c:7:17:BMP180_ReadReg	48	static
-../Core/Src/bmp180.c:45:17:BMP180_WriteReg	40	static
-../Core/Src/bmp180.c:83:17:BMP180_Read16	32	static
-../Core/Src/bmp180.c:123:17:BMP180_Init	24	static
-../Core/Src/bmp180.c:259:17:BMP180_ReadTemperature	56	static
-../Core/Src/bmp180.c:360:17:BMP180_ReadPressure	88	static
