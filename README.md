@@ -24,8 +24,10 @@ bin/           prebuilt .elf files
 
 
 # Debug case study: CAN2 never finished initialising
+<img width="906" height="413" alt="image" src="https://github.com/user-attachments/assets/6ac71f2c-ae41-4dd6-a44e-0d58491d1876" />
 
-## Symptom
+## Symptom<img width="438" height="464" alt="image" src="https://github.com/user-attachments/assets/ae302ea4-2328-41f0-9103-698b7d3daaf3" />
+
 The Receiver printed its banner, then stopped. No frames were received. The CPU was parked in `Error_Handler()` because `HAL_CAN_Start()` returned an error.
 
 ## Tools
