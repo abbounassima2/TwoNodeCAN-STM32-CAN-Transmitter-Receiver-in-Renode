@@ -1,0 +1,38 @@
+# Build output
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.cyclo
+*.list
+*.map
+*.hex
+*.bin
+*.srec
+
+# Keep prebuilt firmware for running without an IDE
+!bin/
+!bin/*.elf
+
+# IDE metadata
+.metadata/
+.settings/
+.project
+.cproject
+.mxproject
+*.ioc.bak
+*.launch
+.idea/
+.vscode/
+
+Drivers/
+Middlewares/
+Startup/
+Core/Startup/
+
+# OS junk
+Thumbs.db
+.DS_Store
+*.log
+*.tmp

@@ -1,0 +1,46 @@
+using sysbus
+
+# ---------- One CAN hub and one quantum for the whole emulation ----------
+emulation CreateCANHub "canHub"
+emulation SetGlobalQuantum "0.000100"
+
+# ---------- Machine 1: Receiver ----------
+mach create "CAN Receiver"
+machine LoadPlatformDescription @C:\Users\User\Desktop\canbus\can2\can2.repl
+sysbus LoadELF @C:\Users\User\Desktop\canbus\can2\Debug\can2.elf
+machine StartGdbServer 3334
+cpu PerformanceInMips 10
+showAnalyzer sysbus.usart1
+connector Connect sysbus.can2 canHub
+
+# ---------- Machine 2: Transceiver ----------
+mach create "CAN Tranceiver"
+machine LoadPlatformDescription @C:\Users\User\Desktop\sensor\renode_sim\renode_sim.repl
+sysbus LoadELF @C:\Users\User\Desktop\sensor\renode_sim\Debug\renode_sim.elf
+machine StartGdbServer 3333
+cpu PerformanceInMips 10
+showAnalyzer sysbus.usart1
+connector Connect sysbus.can2 canHub
+
+# ---------- Optional logging (uncomment to debug the bus) ----------
+# logLevel -1 canHub
+
+# ---------- Starting temperature, set BEFORE anything runs ----------
+mach set "CAN Tranceiver"
+sysbus.i2c1.sensor_bmp180 Temperature 18
+
+# ---------- Scripted ramp: each step runs 6 simulated seconds ----------
+emulation RunFor "6"
+sysbus.i2c1.sensor_bmp180 Temperature 19
+emulation RunFor "6"
+sysbus.i2c1.sensor_bmp180 Temperature 20
+emulation RunFor "6"
+sysbus.i2c1.sensor_bmp180 Temperature 21
+emulation RunFor "6"
+sysbus.i2c1.sensor_bmp180 Temperature 22
+emulation RunFor "6"
+sysbus.i2c1.sensor_bmp180 Temperature 20
+emulation RunFor "6"
+
+# ---------- Keep running so you can type your own values ----------
+start
