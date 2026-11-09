@@ -38,9 +38,6 @@ bin/           prebuilt .elf files
 
 we debug by attaching and set breakpoints
 
-<p align="center">
-  <img width="75%" src="https://github.com/user-attachments/assets/d33e7cd4-a58e-4453-a793-db64556dfeee" alt="Attaching GDB and setting breakpoints">
-</p>
 
 <p align="center">
   <img width="55%" src="https://github.com/user-attachments/assets/d96baedf-7963-4fc5-a4cb-922d3e50be85" alt="GDB debugging session">
