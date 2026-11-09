@@ -7,11 +7,11 @@ Both run bare-metal HAL firmware in the [Renode](https://renode.io) emulator, jo
 
 ## Repository layout
 
-```
+```text
 transmitter/   main.c, BMP180.c/.h, transmitter.repl
 receiver/      main.c, receiver.repl
 renode/        canbus.resc
-bin/           prebuilt .elf files 
+bin/           prebuilt .elf files
 ```
 
 ## CAN frame
@@ -22,35 +22,42 @@ bin/           prebuilt .elf files
 | 1-2 | Temperature x10, int16, little-endian |
 | 3 | Sensor status (1 = valid) |
 
-
 # Debug case study: CAN2 never finished initialising
-<img width="906" height="413" alt="image" src="https://github.com/user-attachments/assets/6ac71f2c-ae41-4dd6-a44e-0d58491d1876" />
 
-<img width="438" height="464" alt="image" src="https://github.com/user-attachments/assets/ae302ea4-2328-41f0-9103-698b7d3daaf3" />
+<p align="center">
+  <img width="75%" src="https://github.com/user-attachments/assets/6ac71f2c-ae41-4dd6-a44e-0d58491d1876" alt="CAN2 debugging overview">
+</p>
 
+<p align="center">
+  <img width="45%" src="https://github.com/user-attachments/assets/ae302ea4-2328-41f0-9103-698b7d3daaf3" alt="CAN2 register debugging">
+</p>
 
 ## Tools
+
 `arm-none-eabi-gdb` attached to Renode's GDB server (port 3333 for the Transmitter).
 
+we debug by attaching and set breakpoints
 
-## Step 1: attach and set breakpoints
-<img width="891" height="278" alt="{806E1303-3FEB-44F3-987D-4EEC8F6EF524}" src="https://github.com/user-attachments/assets/d33e7cd4-a58e-4453-a792-db64556dfeee" />
+<p align="center">
+  <img width="75%" src="https://github.com/user-attachments/assets/d33e7cd4-a58e-4453-a793-db64556dfeee" alt="Attaching GDB and setting breakpoints">
+</p>
 
-<img width="561" height="359" alt="{E385656D-C5F7-42DC-981E-2A94402D5B98}" src="https://github.com/user-attachments/assets/d96baedf-7963-4fc5-a4cb-922d3e50be85" />
-
-
+<p align="center">
+  <img width="55%" src="https://github.com/user-attachments/assets/d96baedf-7963-4fc5-a4cb-922d3e50be85" alt="GDB debugging session">
+</p>
 
 Addresses = base + offset (CAN2 base `0x40006800`, from `can2.repl`; ).
 
 confirming  where it fails as seen in the image below it didn't initialize
-<img width="446" height="224" alt="{0246C412-57BD-4872-8A59-C6906A44183A}" src="https://github.com/user-attachments/assets/f92df539-a2f0-4c9a-ac30-b154dca7471d" />
 
+<p align="center">
+  <img width="55%" src="https://github.com/user-attachments/assets/f92df539-a2f0-4c9a-ac30-b154dca7471d" alt="CAN2 initialization failure">
+</p>
 
 | Address | Register |
 |---|---|
 | `0x40006800` | MCR (offset 0x00) |
 | `0x40006804` | MSR (offset 0x04) |
-
 
 | Register | Bit | Name | Meaning |
 |---|---|---|---|
@@ -59,20 +66,8 @@ confirming  where it fails as seen in the image below it didn't initialize
 | MSR | 0 | INAK | 1 = in initialisation mode |
 | MSR | 1 | **SLAK** | 1 = controller confirms it is asleep |
 
-
 The reset value of MCR is `0x00010002`, so the controller **starts asleep** (SLEEP=1). `HAL_CAN_Init` must clear SLEEP and wait for SLAK to drop. If it cannot, init times out.
 
 from the debugging we fixed in the init function `HAL_CAN_MspInit`:
 
-
-
-
-
-
-
-
-
-
 After Rebuilding , we see that correct expected behavior past the CAN initialization has worked efficiently....
-
-
