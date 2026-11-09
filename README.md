@@ -33,32 +33,25 @@ The Receiver printed its banner, then stopped. No frames were received. The CPU 
 ## Tools
 `arm-none-eabi-gdb` attached to Renode's GDB server (port 3333 for the Transmitter).
 
-## Step 0: prepare Renode
-Comment out the final `start` line in `canbus.resc` so the CPU is held, then run `include`. Renode's GDB server starts the emulation when gdb issues `continue`.
 
 ## Step 1: attach and set breakpoints
-```
-arm-none-eabi-gdb receiver/Debug/can2.elf
-(gdb) target remote localhost:3334
-(gdb) break HAL_CAN_Init
-(gdb) break HAL_CAN_Start
-(gdb) break Error_Handler
-(gdb) continue
-```
+<img width="891" height="278" alt="{806E1303-3FEB-44F3-987D-4EEC8F6EF524}" src="https://github.com/user-attachments/assets/d33e7cd4-a58e-4453-a792-db64556dfeee" />
+
+<img width="561" height="359" alt="{E385656D-C5F7-42DC-981E-2A94402D5B98}" src="https://github.com/user-attachments/assets/d96baedf-7963-4fc5-a4cb-922d3e50be85" />
 
 
 
-Addresses = base + offset (CAN2 base `0x40006800`, from `can2.repl`; offsets from RM0090).
+Addresses = base + offset (CAN2 base `0x40006800`, from `can2.repl`; ).
+
+confirming  where it fails as seen in the image below it didn't initialize
+<img width="446" height="224" alt="{0246C412-57BD-4872-8A59-C6906A44183A}" src="https://github.com/user-attachments/assets/f92df539-a2f0-4c9a-ac30-b154dca7471d" />
+
 
 | Address | Register |
 |---|---|
 | `0x40006800` | MCR (offset 0x00) |
 | `0x40006804` | MSR (offset 0x04) |
-| `0x40023840` | RCC_APB1ENR (RCC base 0x40023800 + 0x40) |
 
-
-
-How to read the values:
 
 | Register | Bit | Name | Meaning |
 |---|---|---|---|
@@ -66,73 +59,21 @@ How to read the values:
 | MCR | 1 | **SLEEP** | 1 = controller asleep |
 | MSR | 0 | INAK | 1 = in initialisation mode |
 | MSR | 1 | **SLAK** | 1 = controller confirms it is asleep |
-| APB1ENR | 25 / 26 | CAN1EN / CAN2EN | peripheral clocks (CAN2 needs BOTH) |
+
 
 The reset value of MCR is `0x00010002`, so the controller **starts asleep** (SLEEP=1). `HAL_CAN_Init` must clear SLEEP and wait for SLAK to drop. If it cannot, init times out.
 
-Record your values here:
-
-```
-MCR  = 0x________   SLEEP = _
-MSR  = 0x________   SLAK  = _
-APB1ENR bits 26:25 = __
-```
-Screenshot: `docs/img/02-registers-before.png`
-
-## Step 3: step through init and check the result
+from the debugging we fixed in the init function `HAL_CAN_MspInit`:
 
 
-| Item | Meaning |
-|---|---|
-| `$r0` / return value | 0 = HAL_OK, 1 = HAL_ERROR |
-| `hcan2.State` | 1 = READY, 5 = ERROR |
-| `ErrorCode` | `0x20000` TIMEOUT, `0x80000` NOT_READY, `0x100000` NOT_STARTED |
 
-If SLEEP stays 1 / SLAK stays 1 and ErrorCode is `0x20000`, the controller never woke up, so `HAL_CAN_Start` refuses to run. Screenshot: `docs/img/03-registers-after.png`
 
-## Step 4: confirm where it fails
-```
-(gdb) continue
-(gdb) bt
-(gdb) frame 1
-(gdb) list
-```
-`bt` shows `Error_Handler` called from `main.c` at the `HAL_CAN_Start` check. Screenshot: `docs/img/04-backtrace.png`
 
-## Step 5: root cause and fix
-Fill in what the registers showed. The usual causes, in order of likelihood:
 
-1. **CAN clocks off.** CAN2 is a slave of CAN1 and needs `CAN1EN` and `CAN2EN` set in `RCC_APB1ENR`. Fix in `HAL_CAN_MspInit` (or the init function):
-   ```c
-   __HAL_RCC_CAN1_CLK_ENABLE();
-   __HAL_RCC_CAN2_CLK_ENABLE();
-   ```
-2. **Init order or timeout.** The filter or start call ran before init finished.
-3. **Model detail in Renode.** Check `logLevel -1 sysbus.can2` for which write was ignored.
 
-## Step 6: verify the fix
-Rebuild, rerun, repeat steps 1-3. Expected:
 
-```
-MCR.SLEEP = 0, MSR.SLAK = 0, hcan2.State = 1 (READY), ErrorCode = 0
-```
-Then `continue`. The Receiver prints `[OK] CAN2 started` and `Message received`. Screenshot: `docs/img/05-fixed.png`, `docs/img/06-receiver-output.png`
 
-## Bus-level check
-```
-(Renode) logLevel -1 canHub
-```
-shows each frame from the Transmitter (`Id=291` is `0x123`) arriving at the hub.
 
----
+After Rebuilding , we see that correct expected behavior past the CAN initialization has worked efficiently....
 
-## Register debugging cheat sheet
-```
-x/wx  <addr>              one 32-bit word, hex
-x/wt  <addr>              binary (best for flags)
-x/5wx <base>              five registers from the base
-print/x *(CAN_TypeDef*)0x40006800    all named fields
-print/x hcan2.Instance->MSR
-print (reg >> bit) & 1    test one bit
-```
-`address = base + offset`, and registers are 4 bytes apart.
+
